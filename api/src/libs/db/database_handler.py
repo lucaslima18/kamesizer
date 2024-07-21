@@ -1,4 +1,3 @@
-import os
 from typing import Dict
 
 from pydantic import BaseModel
@@ -6,7 +5,6 @@ from sqlalchemy.future import Engine
 from sqlalchemy.pool import NullPool
 from sqlmodel import Session, create_engine
 
-from src.shared.utils.config import get_config
 from src.shared.interfaces.database_interface import Database
 
 
@@ -53,23 +51,13 @@ class DatabaseHandler(Database):
 
     def __create_connection_string__(self, args: Dict[str, str]) -> str:
         del args["self"]
-        arguments_are_empty: bool = all(map(lambda data: data is None, args.values()))
-
-        test_mode: bool | None = os.path.isfile("__caravel__test__running__")
-        if arguments_are_empty or test_mode:
-            config_as_dict: dict = get_config().__dict__
-            config: dict = {key.lower(): val for key, val in config_as_dict.items()}
-        else:
-            config: dict = args
+        config: dict = args
 
         config: dict = DatabaseConfig(**config)
 
         if config.db_type == "sqlite":
             con_string: str = "sqlite:///database.sqlite"
             return con_string
-        if test_mode:
-            test_db: str | None = get_config().API_TEST_DB
-            config.db_database = test_db
 
         db_host: str = f"{config.db_host}:{config.db_port}"
         db_auth: str = f"{config.db_user}:{config.db_password}"
