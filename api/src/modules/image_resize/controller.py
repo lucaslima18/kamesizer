@@ -5,7 +5,13 @@ from fastapi import UploadFile
 
 from src.shared.utils.config import get_config
 from src.shared.utils.log_handler import LogHandler
-from .ext import IncorrectImageFormat
+from .ext import (
+    ImageMaxSizeExceededError,
+    ImageNegativeSizeError,
+    IncorrectImageFormatError,
+    ResizeToOriginalValueError,
+    ImageAlreadyOnMaxSizeError,
+)
 from .service import ImageResizeService
 
 config = get_config()
@@ -17,7 +23,7 @@ class ImageResizeController:
     prefix = "image-resizer"
     router = APIRouter(prefix=f"/{prefix}")
 
-    @router.post("")
+    @router.post("/resize")
     def create_image(file: UploadFile, new_width: int, new_height: int):
         try:
             file_path = ImageResizeService().create_image(
@@ -29,9 +35,21 @@ class ImageResizeController:
             raise HTTPException(
                 status_code=400,
                 detail={
-                    "message": "Formato incorreto de imagem! verifique o arquivo e tente novamente."
+                    "message": "Formato de imagem não suportado! formatos aceitos: JPG, JPEG, PNG."
                 },
             )
 
-        except IncorrectImageFormat as err:
+        except (
+            ImageMaxSizeExceededError,
+            ImageNegativeSizeError,
+            IncorrectImageFormatError,
+            ResizeToOriginalValueError,
+            ImageAlreadyOnMaxSizeError,
+        ) as err:
             raise HTTPException(status_code=400, detail=err.args[0])
+
+    @router.get("+image_name")
+    def search_image_by_status(): ...
+
+    @router.post("/resized-image")
+    def resized_image(): ...
