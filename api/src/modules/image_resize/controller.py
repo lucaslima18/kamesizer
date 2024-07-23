@@ -13,6 +13,7 @@ from .ext import (
     ImageAlreadyOnMaxSizeError,
 )
 from .service import ImageResizeService
+from .interfaces.storage_interface import LocalStorage
 
 config = get_config()
 logger = LogHandler()
@@ -27,7 +28,10 @@ class ImageResizeController:
     def create_image(file: UploadFile, new_width: int, new_height: int):
         try:
             file_path = ImageResizeService().create_image(
-                file=file, new_width=new_width, new_height=new_height
+                storage=LocalStorage(storage_path=config.API_STORAGE_PATH),
+                file=file,
+                new_width=new_width,
+                new_height=new_height,
             )
             return FileResponse(path=file_path)
 
