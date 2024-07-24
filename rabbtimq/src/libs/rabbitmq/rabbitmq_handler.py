@@ -1,24 +1,23 @@
-import os
 import json
 import time
 import pika as broker
 
-from dotenv import load_dotenv, find_dotenv
 from pika.exceptions import AMQPConnectionError
 
-from src.shared.utils.logs import LogHandler
+from src.shared.utils.log_handler import LogHandler
+from src.shared.utils.config import get_config
 
-load_dotenv(find_dotenv())
 logger = LogHandler()
+config = get_config()
 
 
-class RabbitMQ:
+class RabbitMQHandler:
     def __init__(self, callback=None):
-        self.queue = "DATATCU_WEBSCRAPING_QUEUE"
-        username = os.getenv("RABBITMQ_USER")
-        password = os.getenv("RABBITMQ_PASS")
-        host = os.getenv("RABBITMQ_HOST")
-        port = os.getenv("RABBITMQ_PORT")
+        self.queue = config.RABBITMQ_QUEUE
+        username = config.RABBITMQ_USER
+        password = config.RABBITMQ_PASS
+        host = config.RABBITMQ_HOST
+        port = config.RABBITMQ_PORT
         credentials = broker.PlainCredentials(username, password)
 
         self.callback = callback
@@ -32,22 +31,20 @@ class RabbitMQ:
             heartbeat=60,
         )
 
-    def send_message(self, data):
-        conn = broker.BlockingConnection(self.parameters)
-        channel = conn.channel()
-        channel.basic_publish(
-            exchange="resize_image",
-            routing_key="RESIZE_IMAGE",
-            body=json.dumps({"data": data}),
-        )
-        channel.close()
-        conn.close()
-
     def bootstrap(self):
         try:
             self.connection = broker.BlockingConnection(self.parameters)
             self.channel = self.connection.channel()
+            self.channel.exchange_declare(
+                exchange='resize_image',
+                exchange_type='direct'
+            )
             self.channel.queue_declare(queue=self.queue)
+            self.channel.queue_bind(
+                queue=self.queue,
+                exchange='resize_image',
+                routing_key='RESIZE_IMAGE'
+            )
 
             self.channel.basic_consume(
                 queue=self.queue, on_message_callback=self.callback, auto_ack=False

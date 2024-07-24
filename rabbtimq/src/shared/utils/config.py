@@ -6,6 +6,7 @@ load_dotenv(find_dotenv())
 
 
 class GeneralConfig:
+    STORAGE_PATH = os.getenv('STORAGE_PATH')
     RABBITMQ_PORT = os.getenv('RABBITMQ_PORT')
     RABBITMQ_HOST = os.getenv('RABBITMQ_HOST')
     RABBITMQ_USER = os.getenv('RABBITMQ_USER')

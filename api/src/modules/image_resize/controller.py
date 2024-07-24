@@ -27,13 +27,14 @@ class ImageResizeController:
     @router.post("/resize")
     def create_image(file: UploadFile, new_width: int, new_height: int):
         try:
-            file_path = ImageResizeService().create_image(
+            # return FileResponse(path=file_path)
+
+            return ImageResizeService().create_image(
                 storage=LocalStorage(storage_path=config.API_STORAGE_PATH),
                 file=file,
                 new_width=new_width,
                 new_height=new_height,
             )
-            return FileResponse(path=file_path)
 
         except UnidentifiedImageError:
             raise HTTPException(
@@ -52,8 +53,18 @@ class ImageResizeController:
         ) as err:
             raise HTTPException(status_code=400, detail=err.args[0])
 
-    @router.get("+image_name")
-    def search_image_by_status(): ...
+    @router.get("/resize-status")
+    def search_image_by_status(file_name: str):
+        return ImageResizeService().get_status(
+            storage=LocalStorage(storage_path=config.API_STORAGE_PATH),
+            file_name=file_name,
+        )
 
     @router.post("/resized-image")
-    def resized_image(): ...
+    def resized_image(file_name: str):
+        image_path = ImageResizeService().get_resized_image(
+            storage=LocalStorage(storage_path=config.API_STORAGE_PATH),
+            file_name=file_name,
+        )
+
+        return FileResponse(path=image_path)

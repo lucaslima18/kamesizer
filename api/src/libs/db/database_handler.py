@@ -1,21 +1,32 @@
 from typing import Dict
 
-from pydantic import BaseModel
 from sqlalchemy.future import Engine
-from sqlalchemy.pool import NullPool
 from sqlmodel import Session, create_engine
+from abc import ABC
 
-from src.shared.interfaces.database_interface import Database
+from src.shared.utils.config import get_config
+from src.shared.utils.log_handler import LogHandler
+from src.libs.db.schemas import DatabaseConfig
 
 
-class DatabaseConfig(BaseModel):
-    db_host: None | str = ""
-    db_port: None | str = ""
-    db_database: None | str = ""
-    db_user: None | str = ""
-    db_password: None | str = ""
-    db_type: None | str = ""
-    db_driver: None | str = ""
+logger = LogHandler(
+    format='[%(levelname)s] -  %(asctime)s, [database_handler.py] %(message)s'
+)
+
+
+class Database(ABC):
+
+    @classmethod
+    def get_session(self):
+        pass
+
+    @classmethod
+    def __init__(self) -> Session:
+        pass
+
+    @classmethod
+    def __exit__(self, *args, **kwargs) -> None:
+        pass
 
 
 class DatabaseHandler(Database):
@@ -27,12 +38,10 @@ class DatabaseHandler(Database):
         db_user: None | str = None,
         db_password: None | str = None,
         db_type: None | str = None,
-        db_driver: None | str = None,
+        db_driver: None | str = None
     ) -> None:
         connection_string = self.__create_connection_string__(locals())
-        self.engine = create_engine(
-            connection_string, poolclass=NullPool, pool_recycle=0
-        )
+        self.engine = create_engine(connection_string)
         self.session = None
 
     def get_engine(self) -> Engine:
@@ -50,29 +59,27 @@ class DatabaseHandler(Database):
         self.session.close()
 
     def __create_connection_string__(self, args: Dict[str, str]) -> str:
-        del args["self"]
-        config: dict = args
+        del args['self']
+        arguments_are_empty = all(
+            map(lambda data: data is None, args.values())
+        )
 
-        config: dict = DatabaseConfig(**config)
+        if arguments_are_empty:
+            config_as_dict = get_config().__dict__
+            config = {key.lower(): val for key, val in config_as_dict.items()}
+        
+        else:
+            config = args
+       
+        config = DatabaseConfig(**config)
 
-        if config.db_type == "sqlite":
-            con_string: str = "sqlite:///database.sqlite"
+        if config.db_type == 'sqlite':
+            con_string = 'sqlite:///database.sqlite'
             return con_string
 
-        db_host: str = f"{config.db_host}:{config.db_port}"
-        db_auth: str = f"{config.db_user}:{config.db_password}"
-        db_database: str | None = config.db_database
-
-        if config.db_driver:
-            db_database: str = config.db_database + f"?driver={config.db_driver}"
-
-        if config.db_type and config.db_type.lower() == "oracle+cx_oracle+service_name":
-
-            con_string: str = (
-                f"oracle+cx_oracle://{db_auth}@{db_host}/?service_name={config.db_database}"
-            )
-            return con_string
-
-        con_string: str = f"{config.db_type}://{db_auth}@{db_host}/{db_database}"
+        db_host = f'{config.db_host}:{config.db_port}'
+        db_auth = f'{config.db_user}:{config.db_password}'
+        db_database = f'{config.db_database}'
+        con_string = f'{config.db_type}://{db_auth}@{db_host}/{db_database}'
 
         return con_string

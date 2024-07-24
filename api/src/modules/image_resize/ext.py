@@ -26,3 +26,9 @@ class ImageAlreadyOnMaxSizeError(Exception):
     """
     The image is already on max supported size
     """
+
+
+class ImageAlreadyExists(Exception):
+    """
+    The image already exists
+    """
