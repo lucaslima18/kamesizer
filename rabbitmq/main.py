@@ -24,8 +24,12 @@ class Application:
             ch.close()
 
             fr = FileResizer()
-            time.sleep(30)
-            fr.resize_image(file_name=data['file_name'], new_width=data['new_width'], new_height=data['new_height'], encoded_image=data['image_data'])
+            fr.resize_image(
+                file_name=data["file_name"],
+                new_width=data["new_width"],
+                new_height=data["new_height"],
+                encoded_image=data["image_data"],
+            )
 
         except Exception as err:
             logger.error(err)

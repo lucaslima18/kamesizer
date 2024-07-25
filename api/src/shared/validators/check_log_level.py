@@ -1,5 +1,5 @@
-def check_log_level(act_log_level: str):
-    correct_levels = ['INFO', 'ERROR', 'DEBUG', 'WARN']
+def check_log_level(act_log_level: str) -> str:
+    correct_levels = ["INFO", "ERROR", "DEBUG", "WARN"]
     act_log_level = act_log_level.upper()
 
     if act_log_level not in correct_levels:

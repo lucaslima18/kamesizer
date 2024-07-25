@@ -1,0 +1,64 @@
+version: '3.9'
+services:
+  kamesizer_api:
+    build: api
+    ports: 
+      - 8000:8000
+    command: sh entrypoint.sh
+    env_file:
+      - api/.env
+    depends_on:
+      - kamesizer_db
+      - kamesizer_rabbitmq
+      - kamesizer_queue
+    volumes:
+      - storage:/storage
+    networks:
+      - kamesizer_network
+  
+  kamesizer_queue:
+    build: rabbitmq
+    command: sh entrypoint.sh
+    env_file:
+      - rabbitmq/.env
+    depends_on:
+      - kamesizer_db
+      - kamesizer_rabbitmq
+    volumes:
+      - storage:/storage
+    networks:
+      - kamesizer_network
+  
+  kamesizer_db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: kamesizer
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - kamesizer_network
+  
+  kamesizer_rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbitmq
+      RABBITMQ_DEFAULT_PASS: rabbitmq
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - kamesizer_network
+
+volumes:
+  storage:
+  mysql_data:
+  rabbitmq_data:
+
+networks:
+  kamesizer_network:
+    driver: bridge

@@ -19,7 +19,7 @@ class GeneralConfig(BaseModel):
     API_LOG_LEVEL: str = check_log_level(
         act_log_level=os.getenv("API_LOG_LEVEL", default="info")
     )
-    API_STORAGE_PATH: str = os.getenv("API_STORAGE_PATH", default="../storage/")
+    API_STORAGE_PATH: str = os.getenv("API_STORAGE_PATH", default="/storage")
     DB_TYPE: str = os.getenv("DB_TYPE")
     DB_HOST: str = os.getenv("DB_HOST")
     DB_DATABASE: str = os.getenv("DB_DATABASE")
