@@ -1,4 +1,3 @@
-import json
 import time
 import pika as broker
 
@@ -31,19 +30,26 @@ class RabbitMQHandler:
             heartbeat=60,
         )
 
+    def connect(self):
+        while True:
+            try:
+                self.connection = broker.BlockingConnection(self.parameters)
+                self.channel = self.connection.channel()
+                logger.info("RabbitMQ Connected")
+                break
+            except AMQPConnectionError as err:
+                logger.error(f"Connection failed: {err}, retrying in 5 seconds...")
+                time.sleep(5)
+
     def bootstrap(self):
         try:
-            self.connection = broker.BlockingConnection(self.parameters)
-            self.channel = self.connection.channel()
+            self.connect()
             self.channel.exchange_declare(
-                exchange='resize_image',
-                exchange_type='direct'
+                exchange="resize_image", exchange_type="direct"
             )
             self.channel.queue_declare(queue=self.queue)
             self.channel.queue_bind(
-                queue=self.queue,
-                exchange='resize_image',
-                routing_key='RESIZE_IMAGE'
+                queue=self.queue, exchange="resize_image", routing_key="RESIZE_IMAGE"
             )
 
             self.channel.basic_consume(

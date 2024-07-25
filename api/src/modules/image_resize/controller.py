@@ -11,6 +11,8 @@ from .ext import (
     IncorrectImageFormatError,
     ResizeToOriginalValueError,
     ImageAlreadyOnMaxSizeError,
+    ImageNotFound,
+    StillNotResized
 )
 from .service import ImageResizeService
 from .interfaces.storage_interface import LocalStorage
@@ -27,8 +29,6 @@ class ImageResizeController:
     @router.post("/resize")
     def create_image(file: UploadFile, new_width: int, new_height: int):
         try:
-            # return FileResponse(path=file_path)
-
             return ImageResizeService().create_image(
                 storage=LocalStorage(storage_path=config.API_STORAGE_PATH),
                 file=file,
@@ -55,16 +55,23 @@ class ImageResizeController:
 
     @router.get("/resize-status")
     def search_image_by_status(file_name: str):
-        return ImageResizeService().get_status(
-            storage=LocalStorage(storage_path=config.API_STORAGE_PATH),
-            file_name=file_name,
-        )
+        try:
+            return ImageResizeService().get_status(
+                storage=LocalStorage(storage_path=config.API_STORAGE_PATH),
+                file_name=file_name,
+            )
+
+        except ImageNotFound as err:
+            raise HTTPException(status_code=404, detail=err.args[0])
 
     @router.post("/resized-image")
     def resized_image(file_name: str):
-        image_path = ImageResizeService().get_resized_image(
-            storage=LocalStorage(storage_path=config.API_STORAGE_PATH),
-            file_name=file_name,
-        )
+        try:
+            image_path = ImageResizeService().get_resized_image(
+                storage=LocalStorage(storage_path=config.API_STORAGE_PATH),
+                file_name=file_name,
+            )
 
-        return FileResponse(path=image_path)
+            return FileResponse(path=image_path)
+        except StillNotResized as err:
+            raise HTTPException(status_code=400, detail=err.args[0])

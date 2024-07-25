@@ -32,3 +32,15 @@ class ImageAlreadyExists(Exception):
     """
     The image already exists
     """
+
+
+class ImageNotFound(Exception):
+    """
+    The image not exists in dataabse
+    """
+
+
+class StillNotResized(Exception):
+    """
+    The image stil not resized
+    """

@@ -1,19 +1,34 @@
-from io import BytesIO
-import base64
-from PIL import Image
+import json
+
+from src.libs.rabbitmq.rabbitmq_handler import RabbitMQHandler
 from src.shared.utils.config import get_config
+from src.shared.utils.log_handler import LogHandler
+from src.file_resize.service import FileResizerService
 
 config = get_config()
+logger = LogHandler()
 
 
 class FileResizer:
     def __init__(self) -> None:
-        pass
+        logger.info("RabbitMQ Starting...")
+        self.rabbitmq = RabbitMQHandler(self.callback)
+        self.rabbitmq.bootstrap()
 
-    def resize_image(self, file_name: str, new_width: int, new_height: int, encoded_image: str):
-        image = Image.open(BytesIO(base64.b64decode(encoded_image)))
-        resized_image = image.resize((new_width, new_height))
-        resized_image.save(
-            fp=f"{config.STORAGE_PATH}/{file_name.split('.')[0]}-resized.{file_name.split('.')[1]}",
-            format=image.format,
-        )
+    def callback(self, ch, method, _props, body) -> None:
+        try:
+            data = json.loads(body)
+
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            ch.close()
+
+            fr = FileResizerService()
+            fr.resize_image(
+                file_name=data["file_name"],
+                new_width=data["new_width"],
+                new_height=data["new_height"],
+                encoded_image=data["image_data"],
+            )
+
+        except Exception as err:
+            logger.error(err)

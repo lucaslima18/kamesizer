@@ -9,6 +9,7 @@ from .validators.image_validator import ImageValidator
 from .interfaces.storage_interface import StorageInterface
 from .repository import ImageRepository
 from .models import Images
+from .ext import StillNotResized
 
 logger = LogHandler()
 
@@ -86,3 +87,4 @@ class ImageResizeService:
         if image and image.resize_status == 'resized':
             image_resized_name = f"{image.image_name.split('.')[0]}-resized.{file_name.split('.')[1]}"
             return storage.get_file(file_name=image_resized_name)
+        raise StillNotResized("O arquivo ainda não foi redimensionado, por favor, aguarde.")

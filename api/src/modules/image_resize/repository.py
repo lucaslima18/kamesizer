@@ -2,7 +2,7 @@ from sqlmodel import select, or_, and_
 
 from src.libs.db.session_manager import instance_session
 from src.shared.utils.log_handler import LogHandler
-from .ext import ImageAlreadyExists
+from .ext import ImageAlreadyExists, ImageNotFound
 from .models import Images
 
 logger = LogHandler()
@@ -49,13 +49,12 @@ class ImageRepository:
     def get_by_name(image_name: str):
         try:
             with instance_session() as session:
-                return (
-                    session.exec(select(Images).where(Images.image_name == image_name))
-                    .first()
-                )
+                return session.exec(
+                    select(Images).where(Images.image_name == image_name)
+                ).first()
 
         except Exception as err:
-            # TODO: doing a custom error FontNotFound
+            raise ImageNotFound("The searched image not exists.")
             logger.error(err)
 
     @staticmethod
@@ -66,6 +65,7 @@ class ImageRepository:
             ).first()
 
             if not existent_image:
+                raise ImageNotFound("The searched image not exists.")
                 logger.error("file not exists")
 
             existent_image.resize_status = resize_status
