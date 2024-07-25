@@ -1,7 +1,9 @@
 # kamesizer
 
-Kamesizer é um redimensionador de imagem Via API.
+Kamesizer é um redimensionador de imagem Via API. A aplicação consiste em uma API desenvolvida em FastAPI que, juntamente a uma fila (Que irá utilizar o RabbitMQ como message broker) será responsável por realizar redimensionamento de imagens para outro tamanho.
+
 <br>
+
 # Como rodar a aplicação
 
 Antes de rodar a aplicação precisamos garantir que as variáveis de ambiente estejam preenchdas, para tal, tanto no diretório /api quanto no diretório /rabbitmq, utilizer o arquivo .env.example como base e crie um arquivo .env nas duas pastas.
